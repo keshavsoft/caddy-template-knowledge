@@ -558,18 +558,21 @@ server.listen(PORT, HOST, () => {
       <div class="step-box">
         <div class="step-num">2</div>
         <div class="step-body">
-          <h4>VPS: Pull &amp; Start with PM2 on Port 3000</h4>
-          <p>On your VPS (<code>103.174.102.116</code>):</p>
+          <h4>VPS: Pull &amp; Start with Native Systemd on Port 3000</h4>
+          <p>On your VPS (<code>103.174.102.116</code>), clone into <code>/root/KeshavSoft/</code> and create the systemd unit file:</p>
           <div class="code-container">
             <div class="code-header"><span>SSH / VPS Terminal</span></div>
-            <pre><code>cd /var/www
+            <pre><code>cd /root/KeshavSoft
 git clone https://github.com/keshavsoft/appointment-notifier.git
 cd appointment-notifier
 npm install --production
 
-# Start with PM2 on Port 3000
-PORT=3000 pm2 start app.js --name appointment-notifier
-pm2 save</code></pre>
+# Create /etc/systemd/system/appointment.keshavsoft.com.service:
+# ExecStart=/root/.nvm/versions/node/v24.13.0/bin/node app.js
+# WorkingDirectory=/root/KeshavSoft/appointment-notifier
+
+systemctl daemon-reload
+systemctl enable --now appointment.keshavsoft.com.service</code></pre>
           </div>
         </div>
       </div>
