@@ -18,6 +18,22 @@ Read the full interactive guide with sidebar navigation and syntax highlighting:
 
 ---
 
+## 🏥 Practical Case Study: `appointment-notifier`
+
+Looking to see how this works on a real app? Read the step-by-step code investigation walkthrough:  
+👉 **[How to Inspect appointment-notifier & Determine Its Caddy Input](https://keshavsoft.github.io/caddy-template-knowledge/appointment-notifier-guide.html)**
+
+### Summary of the Deduction:
+1. **Source Inspection (`app.js`)**: `appointment-notifier` runs an HTTP server on port `3000` and intercepts WebSockets with `server.on("upgrade")` on the **exact same port**.
+2. **Frontend Inspection (`display.js`)**: Connects dynamically to `wss://${location.host}/ws` on standard port 443.
+3. **Template Choice**: **`proxy`** is selected because Caddy natively converts HTTP upgrade headers into WebSocket streaming tunnels on the single dial port (`localhost:3000`). (Choosing `ws-split` would be wrong because there is no second port!).
+4. **Command to Run**:
+   ```bash
+   npx caddy-template proxy appointment.keshavsoft.com 3000
+   ```
+
+---
+
 ## 🧭 Quick Template Selector
 
 Use this decision matrix to pick the right template in 5 seconds:
@@ -132,3 +148,4 @@ When returning to the server 3 months from now, follow these 4 steps:
 ## 📄 License
 
 ISC © [KeshavSoft](https://github.com/keshavsoft)
+

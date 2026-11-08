@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Practical Guide: How to Determine Caddy Input for appointment-notifier — KeshavSoft</title>
+  <meta name="description" content="Step-by-step code walkthrough showing how to inspect appointment-notifier, deduce its port and WebSocket architecture, and generate the exact Caddy JSON route.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --card-hover: #1e293b;
+      --text: #f3f4f6;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-glow: rgba(56, 189, 248, 0.18);
+      --secondary: #818cf8;
+      --accent: #34d399;
+      --warning: #fbbf24;
+      --code-bg: #030712;
+      --sidebar-bg: #070b14;
+      --header-bg: rgba(11, 15, 25, 0.88);
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --card-hover: #f1f5f9;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0284c7;
+      --primary-glow: rgba(2, 132, 199, 0.12);
+      --secondary: #6366f1;
+      --accent: #059669;
+      --warning: #d97706;
+      --code-bg: #0f172a;
+      --sidebar-bg: #f1f5f9;
+      --header-bg: rgba(248, 250, 252, 0.88);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--header-bg);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.85rem 1.5rem;
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+    .brand-badge {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+    }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+    .header-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .header-link:hover { color: var(--primary); }
+    .btn-theme {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .breadcrumb {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+    .breadcrumb a { color: var(--primary); text-decoration: none; }
+
+    .page-title-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    h1 {
+      font-size: clamp(2rem, 4vw, 2.7rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      word-break: break-word;
+    }
+    .lead {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    /* Section Typography */
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 2.5rem 0 1rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 1.5rem 0 0.5rem;
+      color: var(--primary);
+    }
+    p { margin-bottom: 1rem; color: var(--text-muted); font-size: 0.98rem; }
+    strong { color: var(--text); }
+
+    /* Visual Cards & Callouts */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      margin: 1.5rem 0;
+    }
+    .callout {
+      background: var(--card-bg);
+      border-left: 4px solid var(--primary);
+      border-radius: 0 8px 8px 0;
+      padding: 1.1rem 1.4rem;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+    }
+    .callout-success { border-left-color: var(--accent); }
+    .callout-warning { border-left-color: var(--warning); }
+    .callout-title {
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Diagram */
+    .diagram-box {
+      background: var(--code-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.45;
+      color: #93c5fd;
+      overflow-x: auto;
+    }
+
+    /* Code Blocks */
+    .code-container {
+      background: var(--code-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      margin: 1rem 0 1.5rem;
+      overflow: hidden;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+    .code-header {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .copy-btn {
+      background: none;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { color: var(--text); border-color: var(--primary); }
+    pre {
+      padding: 1.25rem;
+      overflow-x: auto;
+      line-height: 1.5;
+      color: #e2e8f0;
+    }
+    .code-highlight {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Comparison Table */
+    table.compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+    }
+    table.compare-table th, table.compare-table td {
+      border: 1px solid var(--card-border);
+      padding: 0.85rem 1rem;
+      text-align: left;
+    }
+    table.compare-table th {
+      background: var(--card-bg);
+      color: var(--text);
+      font-weight: 700;
+    }
+    table.compare-table td {
+      background: rgba(3, 7, 18, 0.3);
+      color: var(--text-muted);
+    }
+    table.compare-table code {
+      font-family: var(--font-mono);
+      color: var(--primary);
+    }
+
+    /* Steps */
+    .step-box {
+      display: flex;
+      gap: 1.25rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .step-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #041a2b;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.1rem;
+    }
+    .step-body h4 {
+      font-size: 1.15rem;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--card-border);
+      background: var(--card-bg);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-badge">KS</span>
+        <span>Caddy Handbook</span>
+      </a>
+      <div class="header-nav">
+        <a href="index.html" class="header-link">← Main Handbook</a>
+        <a href="https://keshavsoft.github.io/caddy-hosting/" target="_blank" rel="noopener" class="header-link">Hosting Hub ↗</a>
+        <a href="https://github.com/keshavsoft/appointment-notifier" target="_blank" rel="noopener" class="header-link">appointment-notifier Repo ↗</a>
+        <button id="themeToggle" class="btn-theme" title="Toggle theme">
+          <span id="themeIcon">☀️</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <main class="container">
+
+    <div class="breadcrumb">
+      <a href="index.html">Handbook</a>
+      <span>/</span>
+      <span>Case Study: appointment-notifier</span>
+    </div>
+
+    <span class="page-title-badge">Real-World Practical Case Study</span>
+    <h1>How to Inspect <code>appointment-notifier</code> &amp; Determine Its Caddy Configuration</h1>
+    <p class="lead">
+      The entire reason we built these tools is to publish real applications like <strong><code>appointment-notifier</code></strong> on your VPS. Here is the exact mental process of opening the code, deducing the port and protocol, choosing the right template, and going live.
+    </p>
+
+    <!-- Phase 1: The Code Investigation -->
+    <section>
+      <h2><span>🕵️</span> Phase 1: The 3-Minute Code Investigation</h2>
+      <p>
+        Before you run any CLI tool, you inspect the application itself. Open <code>d:\KeshavSoftRepos\nov\8\appointment-notifier</code> and examine three specific lines:
+      </p>
+
+      <div class="step-box">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Inspect <code>app.js</code>: What port does the server listen on?</h4>
+          <p>Look at lines 10-11 and 97 of <code>app.js</code>:</p>
+          <div class="code-container">
+            <div class="code-header"><span>appointment-notifier/app.js (Lines 10-11, 97)</span></div>
+            <pre><code>const HOST = process.env.HOST?.trim() || "127.0.0.1";
+<span class="code-highlight">const PORT = Number(process.env.PORT ?? 3000);</span>
+
+server.listen(PORT, HOST, () => {
+    console.log(`Appointment notifier listening on ${HOST}:${PORT}`);
+});</code></pre>
+          </div>
+          <p>
+            <strong>Finding:</strong> The application listens on port <strong><code>3000</code></strong> (or whatever <code>process.env.PORT</code> is passed at runtime).
+          </p>
+        </div>
+      </div>
+
+      <div class="step-box">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Inspect <code>app.js</code>: Does it use WebSockets? And on which port?</h4>
+          <p>Look at lines 77 and 88-95 of <code>app.js</code>:</p>
+          <div class="code-container">
+            <div class="code-header"><span>appointment-notifier/app.js (Lines 77, 88-95)</span></div>
+            <pre><code><span class="code-highlight">const wss = new WebSocketServer({ noServer: true });</span>
+
+<span class="code-highlight">server.on("upgrade", (req, socket, head) => {</span>
+    const pathname = new URL(req.url, "http://localhost").pathname;
+    if (pathname !== "/ws") {
+        socket.destroy();
+        return;
+    }
+    wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws, req));
+});</code></pre>
+          </div>
+          <p>
+            <strong>Finding:</strong> Notice <code>noServer: true</code> and <code>server.on("upgrade", ...)</code>. This is the classic Node.js pattern where the WebSocket server is attached directly to the <strong>existing HTTP server</strong>.
+          </p>
+          <p>
+            It does <strong>NOT</strong> create a second port. Both normal web pages (<code>/doctor</code>, <code>/display</code>) and WebSocket live streams (<code>/ws</code>) run on the <strong>single port 3000</strong>!
+          </p>
+        </div>
+      </div>
+
+      <div class="step-box">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Inspect Frontend: How does the browser connect?</h4>
+          <p>Look at lines 6-7 of <code>public/v2/js/display.js</code> (and <code>doctor.js</code>):</p>
+          <div class="code-container">
+            <div class="code-header"><span>appointment-notifier/public/v2/js/display.js (Lines 6-7)</span></div>
+            <pre><code>const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+<span class="code-highlight">const socket = new WebSocket(`${wsProtocol}//${location.host}/ws?role=display`);</span></code></pre>
+          </div>
+          <p>
+            <strong>Finding:</strong> The browser dynamically inspects <code>location.protocol</code> and <code>location.host</code>. When deployed to <code>https://appointment.keshavsoft.com/display</code>, it automatically opens <code>wss://appointment.keshavsoft.com/ws?role=display</code> on the standard HTTPS port 443!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Phase 2: Choosing the Template -->
+    <section>
+      <h2><span>⚖️</span> Phase 2: Choosing the Template (Why <code>proxy</code> Wins)</h2>
+      <p>
+        Now let's compare our findings against the templates available in <code>caddy-template</code>:
+      </p>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Template</th>
+            <th>When It Is Used</th>
+            <th>Does It Fit appointment-notifier?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>static</code></td>
+            <td>Pure HTML/CSS files without any Node.js server.</td>
+            <td>❌ <strong>No.</strong> <code>appointment-notifier</code> has active server logic and WebSocket events.</td>
+          </tr>
+          <tr>
+            <td><code>ws-split</code></td>
+            <td>Two separate server processes: Web server on Port A (e.g. 9011) and WebSocket daemon on Port B (e.g. 8080).</td>
+            <td>❌ <strong>No!</strong> <code>appointment-notifier</code> only has ONE port (3000). If you used <code>ws-split</code>, you would be routing traffic to a second phantom port!</td>
+          </tr>
+          <tr>
+            <td><code>proxy</code></td>
+            <td>Single server process handling both HTTP web requests and WebSockets on one port.</td>
+            <td>✅ <strong>100% Perfect Match!</strong> This is the exact architecture of <code>appointment-notifier</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-success">
+        <div class="callout-title">Why Caddy handles WebSockets on <code>proxy</code> with zero configuration:</div>
+        Unlike Nginx or Apache, Caddy natively inspects incoming HTTP request headers. When a client requests an HTTP Upgrade (<code>Upgrade: websocket</code>), Caddy automatically converts the reverse proxy into a bidirectional streaming tunnel to <code>localhost:3000</code>. You don't need any special split rules!
+      </div>
+    </section>
+
+    <!-- Phase 3: The CLI Command -->
+    <section>
+      <h2><span>⚡</span> Phase 3: The Exact CLI Command</h2>
+      <p>
+        Now that you know the target domain is <code>appointment.keshavsoft.com</code> and the local port is <code>3000</code>, you run:
+      </p>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span>Terminal Command</span>
+          <button class="copy-btn" onclick="copySnippet('npx caddy-template proxy appointment.keshavsoft.com 3000', this)">Copy</button>
+        </div>
+        <pre><code>npx caddy-template proxy appointment.keshavsoft.com 3000</code></pre>
+      </div>
+
+      <p>This generates the exact, schema-compliant Caddy JSON route block:</p>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span>Generated Route JSON</span>
+          <button class="copy-btn" onclick="copySnippet(document.getElementById('routeJson').innerText, this)">Copy JSON</button>
+        </div>
+        <pre id="routeJson"><code>{
+  "match": [
+    {
+      "host": [
+        "appointment.keshavsoft.com"
+      ]
+    }
+  ],
+  "handle": [
+    {
+      "handler": "subroute",
+      "routes": [
+        {
+          "handle": [
+            {
+              "handler": "reverse_proxy",
+              "upstreams": [
+                {
+                  "dial": "localhost:3000"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "terminal": true
+}</code></pre>
+      </div>
+    </section>
+
+    <!-- Phase 4: Deploying on VPS -->
+    <section>
+      <h2><span>🚀</span> Phase 4: Going Live on VPS (103.174.102.116)</h2>
+      <p>Here are the 4 final steps to expose <code>appointment-notifier</code> to the world:</p>
+
+      <div class="step-box">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>GoDaddy DNS: Add Subdomain A-Record</h4>
+          <p>
+            In your GoDaddy DNS manager for <code>keshavsoft.com</code>, add an <strong>A Record</strong>:
+          </p>
+          <ul style="margin: 0.5rem 0 0.5rem 1.5rem; color: var(--text-muted); font-size: 0.95rem;">
+            <li><strong>Type:</strong> <code>A</code></li>
+            <li><strong>Name:</strong> <code>appointment</code></li>
+            <li><strong>Value / IP:</strong> <code>103.174.102.116</code></li>
+            <li><strong>TTL:</strong> 1/2 Hour (or default)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step-box">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>VPS: Pull &amp; Start with PM2 on Port 3000</h4>
+          <p>On your VPS (<code>103.174.102.116</code>):</p>
+          <div class="code-container">
+            <div class="code-header"><span>SSH / VPS Terminal</span></div>
+            <pre><code>cd /var/www
+git clone https://github.com/keshavsoft/appointment-notifier.git
+cd appointment-notifier
+npm install --production
+
+# Start with PM2 on Port 3000
+PORT=3000 pm2 start app.js --name appointment-notifier
+pm2 save</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-box">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Caddy: Insert Route &amp; Reload</h4>
+          <p>
+            Open <code>/etc/caddy/caddy.json</code>, append the generated route block into <code>apps.http.servers.srv0.routes</code>, and reload:
+          </p>
+          <div class="code-container">
+            <div class="code-header"><span>SSH / VPS Terminal</span></div>
+            <pre><code>caddy reload --config /etc/caddy/caddy.json</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-box">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Live Verification!</h4>
+          <p>Open your browser and test:</p>
+          <ul style="margin: 0.5rem 0 0.5rem 1.5rem; color: var(--text-muted); font-size: 0.95rem;">
+            <li>Doctor Portal: <strong><code>https://appointment.keshavsoft.com/doctor</code></strong></li>
+            <li>Display Board: <strong><code>https://appointment.keshavsoft.com/display</code></strong></li>
+            <li>Reception Desk: <strong><code>https://appointment.keshavsoft.com/reception</code></strong></li>
+          </ul>
+          <p style="margin-top: 0.5rem;">
+            Click <strong>"Enable Voice"</strong> on the Display screen, call Token <code>101</code> from the Doctor screen, and hear the real-time text-to-speech announcement over secure WSS!
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div style="max-width: 900px; margin: 0 auto;">
+      <strong>KeshavSoft Caddy Hosting Ecosystem</strong> • Case Study Handbook
+    </div>
+  </footer>
+
+  <script>
+    function copySnippet(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = 'Copied!';
+        setTimeout(() => btn.innerText = orig, 1800);
+      });
+    }
+
+    const themeBtn = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const storedTheme = localStorage.getItem('ks-caddy-theme') || 'dark';
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('ks-caddy-theme', theme);
+      themeIcon.innerText = theme === 'dark' ? '☀️' : '🌙';
+    }
+
+    setTheme(storedTheme);
+
+    themeBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+  </script>
+
+</body>
+</html>

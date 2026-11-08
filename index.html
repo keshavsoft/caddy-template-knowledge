@@ -172,6 +172,7 @@
       flex: 1;
       padding: 2.5rem 3rem 5rem;
       max-width: 950px;
+      min-width: 0;
     }
 
     /* Article Typography */
@@ -194,11 +195,12 @@
       margin-bottom: 0.75rem;
     }
     h1 {
-      font-size: 2.4rem;
+      font-size: clamp(1.8rem, 3.5vw, 2.4rem);
       font-weight: 800;
       letter-spacing: -0.03em;
-      line-height: 1.2;
+      line-height: 1.25;
       margin-bottom: 0.75rem;
+      word-break: break-word;
     }
     .lead {
       font-size: 1.15rem;
@@ -440,6 +442,15 @@
 
     <!-- Sticky Navigation Sidebar -->
     <aside class="sidebar">
+      <div class="sidebar-title">Featured Case Study</div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-item">
+          <a href="appointment-notifier-guide.html" class="sidebar-link" style="color: var(--accent); font-weight: 700;">
+            🏥 appointment-notifier ↗
+          </a>
+        </li>
+      </ul>
+
       <div class="sidebar-title">Getting Started</div>
       <ul class="sidebar-menu">
         <li class="sidebar-item"><a href="#cold-start" class="sidebar-link active">Cold-Start Mental Model</a></li>
@@ -478,6 +489,19 @@
         </p>
       </header>
 
+      <!-- Practical Case Study Banner -->
+      <div style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(129, 140, 248, 0.12)); border: 1px solid var(--primary); border-radius: 12px; padding: 1.5rem; margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <div style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--accent); letter-spacing: 0.05em; margin-bottom: 0.25rem;">Live Practical Case Study</div>
+          <h3 style="margin: 0; font-size: 1.25rem; color: var(--text);">How to Inspect appointment-notifier &amp; Determine Its Caddy Input</h3>
+          <p style="margin: 0.25rem 0 0; color: var(--text-muted); font-size: 0.92rem;">Walk through inspecting app.js, checking WebSockets, and generating the exact route for VPS deployment.</p>
+        </div>
+        <a href="appointment-notifier-guide.html" style="background: var(--primary); color: #041a2b; font-weight: 700; font-size: 0.9rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.4rem;">
+          <span>Read Case Study</span>
+          <span>→</span>
+        </a>
+      </div>
+
       <!-- Chapter 1: Cold Start -->
       <section id="cold-start" class="chapter">
         <h2><span>🧠</span> The Cold-Start Mental Model</h2>
@@ -505,7 +529,8 @@
         <h2><span>🧭</span> Quick Template Selector</h2>
         <p>Use this decision matrix to pick the right template in 5 seconds:</p>
 
-        <table class="anatomy-table">
+        <div style="overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--card-border); border-radius: 8px;">
+        <table class="anatomy-table" style="margin: 0; border: none;">
           <thead>
             <tr>
               <th>If your app looks like this...</th>
@@ -536,6 +561,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
       </section>
 
       <!-- Chapter 3: Template 1 - proxy -->
@@ -806,7 +832,8 @@ Browser ──:443──► Caddy ──► Local Filesystem (/usr/share/cli.kes
         <h2><span>🔍</span> Caddy JSON Anatomy: Plain-English Field Reference</h2>
         <p>Every field in a Caddy JSON route block has a specific, critical purpose:</p>
 
-        <table class="anatomy-table">
+        <div style="overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--card-border); border-radius: 8px;">
+        <table class="anatomy-table" style="margin: 0; border: none;">
           <thead>
             <tr>
               <th>JSON Property</th>
@@ -842,6 +869,7 @@ Browser ──:443──► Caddy ──► Local Filesystem (/usr/share/cli.kes
             </tr>
           </tbody>
         </table>
+        </div>
       </section>
 
       <!-- Chapter 8: VPS Ground Truth -->
