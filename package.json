@@ -1,0 +1,29 @@
+{
+  "name": "caddy-template-knowledge",
+  "version": "1.0.0",
+  "description": "Permanent handbook explaining Caddy JSON route blueprints, architecture patterns, and VPS hosting workflows",
+  "homepage": "https://keshavsoft.github.io/caddy-template-knowledge/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keshavsoft/caddy-template-knowledge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/keshavsoft/caddy-template-knowledge/issues"
+  },
+  "license": "ISC",
+  "author": "KeshavSoft",
+  "type": "module",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "caddy",
+    "caddy-knowledge",
+    "caddy-template",
+    "caddy-hosting",
+    "reverse-proxy",
+    "websocket",
+    "handbook",
+    "keshavsoft"
+  ]
+}
