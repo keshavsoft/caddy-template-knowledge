@@ -136,12 +136,49 @@ When returning to the server 3 months from now, follow these 4 steps:
 
 ---
 
-## 📚 Ecosystem Repositories
+## ⚡ The Story: Why We Transitioned to Native JSON
 
-- **[`caddy-hosting`](https://github.com/keshavsoft/caddy-hosting)**: The umbrella architecture portal and landing page.
-- **[`caddy-cli`](https://github.com/keshavsoft/caddy-cli)**: CLI tool to inspect Caddy JSON routes and occupied ports.
-- **[`caddy-template`](https://github.com/keshavsoft/caddy-template)**: Route blueprint generator.
-- **[`appointment-notifier`](https://github.com/keshavsoft/appointment-notifier)**: Real-time clinic token system running on port `3000`.
+According to the [official Caddy architecture documentation](https://caddyserver.com/docs/getting-started#the-caddyfile-is-an-adapter), **the Caddyfile is only an adapter**.
+
+| Paradigm | [Caddyfile Adapter](https://caddyserver.com/docs/caddyfile) | [Native Caddy JSON](https://caddyserver.com/docs/json/) |
+| :--- | :--- | :--- |
+| **Primary Use** | Manual text editing | True source of truth |
+| **API Support** | Static, requires file reload | Full zero-downtime [Caddy Admin API](https://caddyserver.com/docs/api) (`:2019`) |
+| **Fleet Automation** | Fragile regex string parsing (`sed`) | Safe, programmatic JSON AST manipulation |
+| **Active WebSockets** | Risk of dropped sockets via systemctl | Preserved in-memory across hot reloads |
+
+**Why this handbook exists:** When returning to reverse proxy configuration after months of focusing on application features, developers experience "cold-start amnesia". Hand-crafting nested JSON ASTs (`match ➔ handle ➔ subroute ➔ routes ➔ handle ➔ reverse_proxy ➔ upstreams ➔ dial`) invites syntax mistakes. This handbook provides plain-English blueprints, visual traffic diagrams, and practical checklists.
+
+---
+
+## 🧭 The 3-Stage VPS Subdomain Maturity Model
+
+Never configure DNS, Node.js ports, Caddy routes, and SSL simultaneously. KeshavSoft decouples hosting into three progressive verification stages:
+
+```mermaid
+flowchart TD
+    DNS["GoDaddy DNS<br>call ➔ 103.174.102.116"] --> S1["1️⃣ Stage 1: Flight Check (Zero Disk / Zero Code)<br>npx caddy-subdomain probe call.keshavsoft.com"]
+    S1 --> S1V{"HTTPS 200 OK Live?"}
+    S1V -->|Proven Live!| S2["2️⃣ Stage 2: Static File Server (caddy-fileserver)<br>npx caddy-fileserver init call.keshavsoft.com"]
+    S2 --> S2V{"Keep as Static Site or SPA?"}
+    S2V -->|Static Site / Docs / SPA| Done["✅ Live & Active on Caddy file_server!"]
+    S2V -->|Need Dynamic Node API| S3["3️⃣ Stage 3: Node.js Backend Application<br>ubuntu-service-cli create & caddy-subdomain add :5000"]
+```
+
+---
+
+## 📚 The KeshavSoft Caddy Suite Ecosystem
+
+| Repository | Responsibility | npm / Docs | Key Command |
+| :--- | :--- | :--- | :--- |
+| **[`caddy-cli`](https://github.com/keshavsoft/caddy-cli)** | Observability & Port Mapping | [![npm](https://img.shields.io/npm/v/caddy-cli.svg?style=flat-square)](https://www.npmjs.com/package/caddy-cli) | `npx caddy-cli -p` |
+| **[`caddy-template`](https://github.com/keshavsoft/caddy-template)** | Route Blueprint Generation | [![npm](https://img.shields.io/npm/v/caddy-template.svg?style=flat-square)](https://www.npmjs.com/package/caddy-template) | `npx caddy-template proxy <host> <port>` |
+| **[`caddy-subdomain`](https://github.com/keshavsoft/caddy-subdomain)** | Smoke Probes & Promotion | [![npm](https://img.shields.io/npm/v/caddy-subdomain.svg?style=flat-square)](https://www.npmjs.com/package/caddy-subdomain) | `npx caddy-subdomain probe <host>` |
+| **[`caddy-fileserver`](https://github.com/keshavsoft/caddy-fileserver)** | Ubuntu Filesystem Bridge | [![npm](https://img.shields.io/npm/v/caddy-fileserver.svg?style=flat-square)](https://www.npmjs.com/package/caddy-fileserver) | `npx caddy-fileserver init <host>` |
+| **[`caddy-knowledge`](https://github.com/keshavsoft/caddy-knowledge)** | Master Architectural Handbook | [Live Handbook](https://keshavsoft.github.io/caddy-knowledge/) | Full Suite Reference |
+| **[`caddy-template-knowledge`](https://github.com/keshavsoft/caddy-template-knowledge)** | Route Blueprint Manual | [Live Manual](https://keshavsoft.github.io/caddy-template-knowledge/) | AST Deep-Dives |
+| **[`caddy-hosting`](https://github.com/keshavsoft/caddy-hosting)** | Unified Gateway & Hub | [Live Portal](https://keshavsoft.github.io/caddy-hosting/) | Gateway Hub |
+| **[`appointment-notifier`](https://github.com/keshavsoft/appointment-notifier)** | Real-world Production App | [GitHub Repo](https://github.com/keshavsoft/appointment-notifier) | Real-time WS calling |
 
 ---
 
